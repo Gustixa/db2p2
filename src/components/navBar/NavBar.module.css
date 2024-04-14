@@ -1,0 +1,46 @@
+.navbar {
+    background-color: #1f6779; /* Cambiar el color de fondo del navbar */
+    color: #fff; /* Cambiar el color del texto */
+    padding: 1rem; /* Añadir espacio alrededor del navbar */
+    max-width: 100%;
+  }
+  
+  .navbarBrand {
+    font-size: 1.5rem; /* Tamaño del texto del logo */
+  }
+  
+  .navbarItem {
+    color: #fff;
+    background-color: transparent;
+    border: 1px solid transparent; /* Añadir un borde transparente */
+    padding: 0.5rem 1rem; /* Añadir relleno para hacer que los botones sean más grandes */
+    cursor: pointer;
+    margin-right: 1rem;
+    text-decoration: none; /* Eliminar el subrayado de texto */
+    transition: background-color 0.3s, border-color 0.3s; /* Agregar una transición suave */
+    border-radius: 20px;
+  }
+  
+  .navbarItem:hover,
+  .navbarItem:focus {
+    background-color: rgba(255, 255, 255, 0.1); /* Cambiar el color de fondo al pasar el ratón por encima o al estar enfocado */
+    outline: none; /* Eliminar el contorno del botón al estar enfocado */
+  }
+  
+  .navbarItem:active {
+    background-color: rgba(255, 255, 255, 0.2); /* Cambiar el color de fondo cuando se hace clic */
+    border-color: rgba(255, 255, 255, 0.4); /* Cambiar el color del borde cuando se hace clic */
+  }
+  
+  .navbarMenu {
+    /* Estilos para el menú del navbar */
+    display: flex; /* Usa flexbox para alinear los elementos horizontalmente */
+    justify-content: flex-end; /* Alinea los elementos del menú al extremo derecho */
+  }
+  
+  .navbarEnd {
+    /* Estilos para la sección de la derecha del navbar */
+    display: flex; /* Usa flexbox para alinear los elementos horizontalmente */
+    align-items: center; /* Centra verticalmente los elementos del navbar-end */
+  }
+  
