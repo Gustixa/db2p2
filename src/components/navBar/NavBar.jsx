@@ -9,24 +9,16 @@ function NavBar() {
     }
     return (
         <nav className={styles.navbar}>
-            <div className={styles.navbarBrand}>
-                <a onClick={() => handleButtonClick('/')} className={styles.navbarItem}>
-                    NavBar
-                </a>
-            </div>
             <div className={styles.avbarMenu}>
                 <div className={styles.navbarEnd}>
                     <a onClick={() => handleButtonClick('/')} className={styles.navbarItem}>
-                    Home
+                        Home
                     </a>
                     <a onClick={() => handleButtonClick('/newData')} className={styles.navbarItem}>
-                    Agregar Info
+                        Agregar Info
                     </a>
                     <a href="#" className={styles.navbarItem}>
-                    Analizar Info
-                    </a>
-                    <a onClick={() => handleButtonClick('/updateData')} className={styles.navbarItem}>
-                    Actualizar Info
+                        Analizar Info
                     </a>
                 </div>
             </div>

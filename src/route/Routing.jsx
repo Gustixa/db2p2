@@ -4,7 +4,8 @@ BrowserRouter,
 Routes } from 'react-router-dom'
 import Home from '@pages/home'
 import NewData from '@pages/addData'
-import UpdateUser from '@pages/updateData'
+import UpdateUser from '@pages/updateData/updatePersona'
+import UpdateComercio from '@pages/updateData/updateComercio'
 
 export default function Routing(){
 
@@ -25,6 +26,11 @@ export default function Routing(){
           exact
           path="/updateUser/:nodeId"
           element={(<UpdateUser/>)}
+        />
+        <Route
+          exact
+          path='/updateComercio/:nodeId'
+          element={(<UpdateComercio/>)}
         />
       </Routes>
     </BrowserRouter>

@@ -6,63 +6,85 @@ import NavBar from '@components/navBar'
 
 function Home() {
     const [nodes, setNodes] = useState([])
+    const [searchTerm, setSearchTerm] = useState('')
     const navigate = useNavigate()
 
     useEffect(() => {
         const session = getNeo4jSession()
-        const query = "MATCH (n) RETURN n"
+        let query = `MATCH (n:Persona)`
+
+        if (searchTerm) {
+            query += ` WHERE toLower(n.nombre) CONTAINS toLower("${searchTerm}")`
+        }
+
+        query += ' RETURN n'
 
         session.run(query)
             .then(result => {
                 const records = result.records
-                const nodesData = records.map(record => record.get('n').properties)
+                const nodesData = records.map(record => {
+                    const node = record.get('n').properties
+                    node.neo4jId = record.get('n').identity.low
+                    return node
+                })
                 setNodes(nodesData)
-                session.close() // Cerrar la sesión después de que la transacción se complete
+                session.close()
             })
             .catch(error => console.error('Error retrieving nodes from Neo4j:', error))
+    }, [searchTerm])
 
-        return () => {
-            // No es necesario cerrar la sesión aquí, ya que se cierra después de que la transacción se completa
-        }
-    }, [])
-
-    const handleEditNode = (nodeId) => {
-        // Implementa la lógica para abrir un formulario o un modal de edición para el nodo con el ID especificado
-        navigate(`/updateUser/${nodeId}`)
+    const handleEditNode = (neo4jId) => {
+        navigate(`/updateUser/${neo4jId}`)
     }
 
-    const handleDeleteNode = async (nodeId) => {
+    const handleDeleteNode = async (neo4jId) => {
         try {
-            const session = getNeo4jSession();
-            const deleteQuery = `MATCH (n) WHERE ID(n) = ${nodeId} DELETE n`;
-            await session.run(deleteQuery);
-            session.close();
-            setNodes(prevNodes => prevNodes.filter(node => node.id !== nodeId)); // Usar el callback en setNodes
-            navigate('/'); // Regresar a la página principal después de eliminar el nodo
+            const session = getNeo4jSession()
+            const deleteQuery = `MATCH (n) WHERE ID(n) = ${neo4jId} DELETE n`
+            await session.run(deleteQuery)
+            session.close()
+            setNodes(prevNodes => prevNodes.filter(node => node.neo4jId !== neo4jId))
+            navigate('/')
         } catch (error) {
-            console.error('Error deleting node from Neo4j:', error);
+            console.error('Error deleting node from Neo4j:', error)
         }
-    };
-    
+    }
+
+    const handleNodeInfo = (node) => {
+        // Lógica para mostrar información adicional sobre el nodo
+        console.log("Información del nodo:", node);
+    }
 
     return (
         <div>
-            <NavBar/>
-            <h2>Neo4j Nodes Viewer</h2>
+            <NavBar />
+            <h2 className={styles.title}>Clientes</h2> {/* Título fijo para Clientes */}
+            <input
+                type="text"
+                placeholder="Buscar por nombre..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={styles.search}
+            />
             <div className={styles.nodeContainer}>
                 {nodes.map((node, index) => (
                     <div key={index} className={styles.nodeCard}>
                         <h3>{node.nombre}</h3>
-                        <p>Correos: {node.correos && node.correos.join(', ')}</p>
-                        <p>{node.id}</p>
+                        {node.correos && <p>Correos: {node.correos.join(', ')}</p>}
                         {node.fecha_registro && (
                             <p>Fecha de Registro: {node.fecha_registro.day.low}/{node.fecha_registro.month.low}/{node.fecha_registro.year.low}</p>
                         )}
-                        <p>Sexo: {node.sexo}</p>
-                        <p>Edad: {node.edad && node.edad.low}</p>
+                        {node.sexo && <p>Sexo: {node.sexo}</p>}
+                        {node.edad && <p>Edad: {node.edad.low}</p>}
+                        {node.categoria && <p>Categoría: {node.categoria}</p>}
+                        {node.address && <p>Direccion: {node.address}</p>}
+                        {node.calle && <p>Calle: {node.calle}</p>}
+                        {node.abierto ? <p>Abierto: Sí</p> : <p>Abierto: No</p>}
+
                         <div className={styles.buttonContainer}>
-                            <button className={styles.editButton} onClick={() => handleEditNode(node.id)}>Editar</button>
-                            <button className={styles.deleteButton} onClick={() => handleDeleteNode(node.id)}>Eliminar</button>
+                            <button className={styles.infoButton} onClick={() => handleNodeInfo(node)}>Detalles</button>
+                            <button className={styles.editButton} onClick={() => handleEditNode(node.neo4jId)}>Editar</button>
+                            <button className={styles.deleteButton} onClick={() => handleDeleteNode(node.neo4jId)}>Eliminar</button>
                         </div>
                     </div>
                 ))}
@@ -72,6 +94,9 @@ function Home() {
 }
 
 export default Home
+
+
+
 
 
 

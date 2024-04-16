@@ -1,5 +1,29 @@
-.input {
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+.formColumn {
+    flex: 1;
+    margin-left: 20px;
+}
+
+.formRow {
     margin-bottom: 10px;
+}
+
+.label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.input {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -14,6 +38,7 @@
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    margin-left: 20px;
 }
 
 .submitButton:hover {

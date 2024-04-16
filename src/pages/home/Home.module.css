@@ -1,3 +1,6 @@
+*{
+    font-family: Arial, Helvetica, sans-serif;
+}
 .nodeContainer {
     display: flex;
     flex-wrap: wrap;
@@ -66,4 +69,66 @@
 
 .editButton:hover, .deleteButton:hover {
     opacity: 0.8;
+}
+
+.button {
+    padding: 10px 20px;
+    background-color: #77a6d8;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 20px;
+}
+.button:hover {
+    background-color: #0056b3;
+}
+
+.activeButton {
+    padding: 10px 20px;
+    background-color: #208bfe;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 20px;
+}
+
+.activeButton:hover{
+    background-color: #0056b3;
+}
+
+.search {
+    margin-left: 20px;
+    margin-bottom: 20px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 200px; /* Ajusta el ancho según sea necesario */
+    font-size: 16px;
+    outline: none;
+}
+
+.search:focus {
+    border-color: #007bff; /* Cambia el color del borde al enfocar */
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Añade un efecto de sombra al enfocar */
+}
+
+.title{
+    margin-left: 20px;
+}
+
+.infoButton {
+    background-color: #007bff; /* Color de fondo del botón */
+    color: #fff; /* Color del texto */
+    border: none; /* Quita el borde del botón */
+    padding: 8px 16px; /* Espaciado interno del botón */
+    cursor: pointer; /* Cambia el cursor al pasar por encima del botón */
+    border-radius: 4px; /* Añade esquinas redondeadas al botón */
+    font-size: 14px; /* Tamaño del texto */
+    transition: background-color 0.3s; /* Efecto de transición suave en el cambio de color de fondo */
+}
+
+.infoButton:hover {
+    background-color: #0056b3; /* Color de fondo del botón al pasar el cursor */
 }
