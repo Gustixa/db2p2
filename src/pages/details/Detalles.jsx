@@ -1,67 +1,175 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { getNeo4jSession } from '@db/neo4j';
+  import React, { useState, useEffect } from 'react'
+  import { useNavigate, useParams } from 'react-router-dom'
+  import { getNeo4jSession } from '@db/neo4j'
+  import styles from './Detalles.module.css'
 
-function Detalles() {
-  const [transactions, setTransactions] = useState([]);
-  const { nodeId } = useParams(); // Obtiene el parámetro de la URL
+  function Detalles() {
+    const [tarjeta, setTarjeta] = useState(null)
+    const [compras, setCompras] = useState([])
+    const [transaccion, setTransaccion] = useState(null)
+    const [productosUtilizados, setProductosUtilizados] = useState([])
+    const { nodeId } = useParams()
+    const navigate = useNavigate()
 
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const session = getNeo4jSession();
-        const query = `
-          MATCH (p:Persona)-[:REALIZA]->(t:Transaccion)
-          WHERE id(p) = ${nodeId}
-          RETURN t
-        `;
+    const handleRegresar = () => {
+      navigate('/')
+    }
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const session = getNeo4jSession() // Obtener sesión de Neo4j
 
-        const result = await session.run(query);
-        const records = result.records;
+          // Consulta Cypher para obtener detalles de la tarjeta asociada a la persona con el ID dado
+          const resultTarjeta = await session.run(
+            `
+            MATCH (p:Persona)-[:POSEE]->(t:Tarjeta)
+            WHERE ID(p) = $nodeId
+            RETURN t
+            `,
+            { nodeId: parseInt(nodeId) }
+          )
 
-        if (records.length > 0) {
-          const transactionsData = records.map(record => record.get('t').properties);
-          setTransactions(transactionsData);
-        } else {
-          console.error(`No se encontraron transacciones para la persona con el ID ${nodeId}`);
+          const recordsTarjeta = resultTarjeta.records
+          if (recordsTarjeta.length > 0) {
+            const tarjetaData = recordsTarjeta[0].get('t').properties
+            tarjetaData.fecha_emision = new Date(tarjetaData.fecha_emision)
+            setTarjeta(tarjetaData)
+          } else {
+            console.error(`No se encontró una tarjeta asociada para el nodo con el ID ${nodeId}`)
+          }
+
+          // Consulta Cypher para obtener detalles de las compras de productos realizadas por la persona con el ID dado
+          const resultCompras = await session.run(
+            `
+            MATCH (p:Persona)-[:COMPRA_PRODUCTO]->(prod:Producto)
+            WHERE ID(p) = $nodeId
+            RETURN prod
+            `,
+            { nodeId: parseInt(nodeId) }
+          )
+
+          const recordsCompras = resultCompras.records
+          if (recordsCompras.length > 0) {
+            const comprasData = recordsCompras.map(record => {
+              const productoData = record.get('prod').properties
+              productoData.fecha_compra = new Date(productoData.fecha_compra)
+              return productoData
+            })
+            setCompras(comprasData)
+          } else {
+            console.error(`No se encontraron compras de productos para el nodo con el ID ${nodeId}`)
+          }
+
+          // Consulta Cypher para obtener detalles de la transacción realizada por la persona con el ID dado
+          const resultTransaccion = await session.run(
+            `
+            MATCH (p:Persona)-[:REALIZA]->(t:Transaccion)
+            WHERE ID(p) = $nodeId
+            RETURN t
+            `,
+            { nodeId: parseInt(nodeId) }
+          )
+
+          const recordsTransaccion = resultTransaccion.records
+          if (recordsTransaccion.length > 0) {
+            const transaccionData = recordsTransaccion[0].get('t').properties
+            transaccionData.fecha = new Date(transaccionData.fecha)
+            setTransaccion(transaccionData)
+          } else {
+            console.error(`No se encontró una transacción realizada para el nodo con el ID ${nodeId}`)
+          }
+
+          // Consulta Cypher para obtener detalles de los productos utilizados por la persona con el ID dado
+          const resultProductosUtilizados = await session.run(
+            `
+            MATCH (p:Persona)-[:UTILIZA]->(prod:Producto)
+            WHERE ID(p) = $nodeId
+            RETURN prod
+            `,
+            { nodeId: parseInt(nodeId) }
+          )
+
+          const recordsProductosUtilizados = resultProductosUtilizados.records
+          if (recordsProductosUtilizados.length > 0) {
+            const productosUtilizadosData = recordsProductosUtilizados.map(record => {
+              const productoData = record.get('prod').properties
+              productoData.precio = parseFloat(productoData.precio)
+              productoData.stock_disponible = parseInt(productoData.stock_disponible)
+              return productoData
+            })
+            setProductosUtilizados(productosUtilizadosData)
+          } else {
+            console.error(`No se encontraron productos utilizados para el nodo con el ID ${nodeId}`)
+          }
+
+          session.close()
+        } catch (error) {
+          console.error('Error al recuperar los datos de Neo4j:', error)
         }
-
-        session.close();
-      } catch (error) {
-        console.error('Error retrieving transactions from Neo4j:', error);
       }
-    };
 
-    fetchData();
+      fetchData()
 
-    return () => {
-      // Limpiar efectos si es necesario
-    };
-  }, [nodeId]);
+      return () => {
+        // Limpiar efectos si es necesario
+      }
+    }, [nodeId])
 
-  if (transactions.length === 0) {
-    return <div>No hay transacciones para mostrar.</div>;
+    if (!tarjeta) {
+      return <div className={styles.container}>No se encontró una tarjeta asociada para mostrar.</div>
+    }
+
+    return (
+      <div className={styles.container}>
+        <button onClick={() => handleRegresar()} className={styles.button}>Regresar</button>
+        <h2>Detalles de la Tarjeta</h2>
+        <p>Tipo: {tarjeta.tipo}</p>
+        <p>Límite de Crédito: {tarjeta.limite_credito}</p>
+        <p>Fecha de Emisión: {tarjeta.fecha_emision.toLocaleDateString()}</p>
+        <p>Activa: {tarjeta.activa ? 'Sí' : 'No'}</p>
+  
+        <h2>Compras de Productos</h2>
+        {compras.length > 0 ? (
+          <ul className={styles.list}>
+            {compras.map((compra, index) => (
+              <li key={index}>
+                <p>Nombre: {compra.nombre}</p>
+                <p>Precio: {compra.precio}</p>
+                <p>Fecha de Compra: {compra.fecha_compra.toLocaleDateString()}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div>No se encontraron compras de productos para mostrar.</div>
+        )}
+  
+        <h2>Detalles de la Transacción</h2>
+        {transaccion && (
+          <div>
+            <p>Fecha: {transaccion.fecha.toLocaleDateString()}</p>
+            <p>Tipo: {transaccion.tipo}</p>
+            <p>Monto: {transaccion.monto}</p>
+            <p>Aprobada: {transaccion.aprobada ? 'Sí' : 'No'}</p>
+          </div>
+        )}
+  
+        <h2>Productos Utilizados</h2>
+        {productosUtilizados.length > 0 ? (
+          <ul className={styles.list}>
+            {productosUtilizados.map((producto, index) => (
+              <li key={index}>
+                <p>Nombre: {producto.nombre}</p>
+                <p>Precio: {producto.precio}</p>
+                <p>Stock Disponible: {producto.stock_disponible}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div>No se encontraron productos utilizados para mostrar.</div>
+        )}
+      </div>
+    )
   }
 
-  return (
-    <div>
-      <h2>Transacciones de la Persona</h2>
-      <ul>
-        {transactions.map(transaction => (
-          <li key={transaction.id}>
-          <p>ID de Transacción: {transaction.id ? transaction.id : 'N/A'}</p>
-          <p>Monto: {transaction.monto ? parseInt(transaction.monto) : 'N/A'}</p>
-          <p>Fecha: {transaction.fecha ? new Date(transaction.fecha).toLocaleDateString() : 'N/A'}</p>
-          <p>Tipo: {transaction.tipo ? transaction.tipo : 'N/A'}</p>
-          <p>Aprobada: {transaction.aprobada !== undefined ? (transaction.aprobada ? 'Sí' : 'No') : 'N/A'}</p>
-
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default Detalles;
+  export default Detalles

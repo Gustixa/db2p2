@@ -8,7 +8,10 @@
     justify-content: space-between;
     margin-top: 30px;
 }
-
+h2 {
+    text-align: center; /* Centrar solo el texto del h2 */
+}
+  
 .formColumn {
     flex: 1;
     margin-left: 20px;

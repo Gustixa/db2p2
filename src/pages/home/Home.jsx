@@ -37,16 +37,24 @@ function Home() {
         navigate(`/updateUser/${neo4jId}`)
     }
 
+    /**
+     * Eliminacion del nodo junto con todas las relaciones que posee, entrantes y salientes
+     * @param {} neo4jId 
+     */
     const handleDeleteNode = async (neo4jId) => {
         try {
             const session = getNeo4jSession()
-            const deleteQuery = `MATCH (n) WHERE ID(n) = ${neo4jId} DELETE n`
+            const deleteQuery = `
+                MATCH (n)-[r]-() 
+                WHERE ID(n) = ${neo4jId} 
+                DELETE n, r
+            `
             await session.run(deleteQuery)
             session.close()
             setNodes(prevNodes => prevNodes.filter(node => node.neo4jId !== neo4jId))
             navigate('/')
         } catch (error) {
-            console.error('Error deleting node from Neo4j:', error)
+            console.error('Error deleting node and relationships from Neo4j:', error)
         }
     }
 
