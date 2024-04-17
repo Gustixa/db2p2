@@ -50,10 +50,10 @@ function Home() {
         }
     }
 
-    const handleNodeInfo = (node) => {
-        // Lógica para mostrar información adicional sobre el nodo
-        console.log("Información del nodo:", node);
+    const handleNodeInfo = (neo4jId) => {
+        navigate(`/detalles/${neo4jId}`)
     }
+
 
     return (
         <div>
@@ -79,10 +79,8 @@ function Home() {
                         {node.categoria && <p>Categoría: {node.categoria}</p>}
                         {node.address && <p>Direccion: {node.address}</p>}
                         {node.calle && <p>Calle: {node.calle}</p>}
-                        {node.abierto ? <p>Abierto: Sí</p> : <p>Abierto: No</p>}
-
                         <div className={styles.buttonContainer}>
-                            <button className={styles.infoButton} onClick={() => handleNodeInfo(node)}>Detalles</button>
+                            <button className={styles.infoButton} onClick={() => handleNodeInfo(node.neo4jId)}>Detalles</button>
                             <button className={styles.editButton} onClick={() => handleEditNode(node.neo4jId)}>Editar</button>
                             <button className={styles.deleteButton} onClick={() => handleDeleteNode(node.neo4jId)}>Eliminar</button>
                         </div>

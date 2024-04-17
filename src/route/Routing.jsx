@@ -5,7 +5,7 @@ Routes } from 'react-router-dom'
 import Home from '@pages/home'
 import NewData from '@pages/addData'
 import UpdateUser from '@pages/updateData/updatePersona'
-import UpdateComercio from '@pages/updateData/updateComercio'
+import Detalles from '@pages/details'
 
 export default function Routing(){
 
@@ -29,8 +29,8 @@ export default function Routing(){
         />
         <Route
           exact
-          path='/updateComercio/:nodeId'
-          element={(<UpdateComercio/>)}
+          path='/detalles/:nodeId'
+          element={(<Detalles/>)}
         />
       </Routes>
     </BrowserRouter>

@@ -1,8 +1,8 @@
 import neo4j from 'neo4j-driver'
 
 const driver = neo4j.driver(
-  "neo4j+s://e7678ef5.databases.neo4j.io:7687",
-  neo4j.auth.basic("neo4j", "rjSIrAHCpYnUoF9hoTFKt8TrGHaG73sfX2hOVT0wzg0"),
+  "neo4j+s://aa1788c3.databases.neo4j.io:7687",
+  neo4j.auth.basic("neo4j", "Ot7Oa4GbMMYzHaGwY1A2ZRJIGQepNQLlhN_TLeXZpyA"),
 )
 
 export const getNeo4jSession = () => {
