@@ -6,6 +6,7 @@ import Home from '@pages/home'
 import NewData from '@pages/addData'
 import UpdateUser from '@pages/updateData/updatePersona'
 import Detalles from '@pages/details'
+import NewRelation from '@pages/relation'
 
 export default function Routing(){
 
@@ -31,6 +32,11 @@ export default function Routing(){
           exact
           path='/detalles/:nodeId'
           element={(<Detalles/>)}
+        />
+        <Route
+          exact
+          path='/nuevaRelacion/:nodeId'
+          element={(<NewRelation/>)}
         />
       </Routes>
     </BrowserRouter>

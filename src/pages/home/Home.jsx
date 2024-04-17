@@ -56,10 +56,23 @@ function Home() {
         }
 
         fetchData()
-    }, [searchTerm])
+    }, [searchTerm, selectedNodes])
+
+    const updateNodeInList = (updatedNode) => {
+        setNodes(prevNodes => prevNodes.map(node => {
+            if (node.neo4jId === updatedNode.neo4jId) {
+                return updatedNode;
+            }
+            return node;
+        }));
+    };
 
     const handleEditNode = (neo4jId) => {
-        navigate(`/updateUser/${neo4jId}`)
+        navigate(`/updateUser/${neo4jId}`);
+    };
+
+    const handleRelation = (neo4jId) => {
+        navigate(`/nuevaRelacion/${neo4jId}`)
     }
 
     const handleDeleteNode = async () => {
@@ -148,12 +161,14 @@ function Home() {
                         )}
                         {node.sexo && <p>Sexo: {node.sexo}</p>}
                         {node.edad && <p>Edad: {node.edad.low}</p>}
+
                         {node.categoria && <p>Categoría: {node.categoria}</p>}
                         {node.address && <p>Direccion: {node.address}</p>}
                         {node.calle && <p>Calle: {node.calle}</p>}
                         <div className={styles.buttonContainer}>
                             <button className={styles.infoButton} onClick={() => handleNodeInfo(node.neo4jId)}>Detalles</button>
                             <button className={styles.editButton} onClick={() => handleEditNode(node.neo4jId)}>Editar</button>
+                            <button className={styles.editButton} onClick={() => handleRelation(node.neo4jId)}>Crear relacion</button>
                         </div>
                     </div>
                 ))}

@@ -1,36 +1,41 @@
 import React, { useState } from 'react';
 import NavBar from '@components/navBar';
 import styles from './NewData.module.css';
-import { createNeo4jNode } from '@db/neo4j' // Importa la función para crear un nodo en Neo4j
+import { createNeo4jNode } from '@db/neo4j'; // Importa la función para crear un nodo en Neo4j
 
 function NewData() {
-    const [formData, setFormData] = useState({
+    const initialValues = {
         nombre: '',
         correos: '',
         fechaRegistro: '',
         sexo: '',
-        edad: ''
-    })
+        edad: '',
+        nuevoAtributo: '' // Nuevo campo para agregar como label
+    };
+
+    const [formData, setFormData] = useState(initialValues);
 
     const handleInputChange = (event) => {
-        const { name, value } = event.target
+        const { name, value } = event.target;
         setFormData({
             ...formData,
             [name]: value
-        })
-    }
+        });
+    };
 
     const handleSubmit = async (event) => {
-        event.preventDefault()
+        event.preventDefault();
         try {
             // Lógica para crear un nodo en Neo4j con los datos del formulario
-            await createNeo4jNode(formData)
-            console.log('Nodo creado exitosamente en Neo4j')
+            await createNeo4jNode(formData);
+            console.log('Nodo creado exitosamente en Neo4j');
+            // Reiniciar los valores del formulario a los valores iniciales
+            setFormData(initialValues);
             // Puedes redirigir al usuario a otra página después de crear el nodo si lo deseas
         } catch (error) {
-            console.error('Error al crear el nodo en Neo4j:', error)
+            console.error('Error al crear el nodo en Neo4j:', error);
         }
-    }
+    };
 
     return (
         <div>
@@ -61,6 +66,11 @@ function NewData() {
                             <label>Sexo:</label>
                             <input type="text" name="sexo" value={formData.sexo} onChange={handleInputChange} className={styles.input} />
                         </div>
+                        {/* Nuevo input para el atributo adicional */}
+                        <div className={styles.formRow}>
+                            <label>Nuevo Atributo:</label>
+                            <input type="text" name="nuevoAtributo" value={formData.nuevoAtributo} onChange={handleInputChange} className={styles.input} />
+                        </div>
                     </div>
                     </div>
                     <button type="submit" className={styles.submitButton}>
@@ -72,4 +82,5 @@ function NewData() {
     )
 }
 
-export default NewData
+export default NewData;
+
