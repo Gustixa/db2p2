@@ -7,66 +7,122 @@ import NavBar from '@components/navBar'
 function Home() {
     const [nodes, setNodes] = useState([])
     const [searchTerm, setSearchTerm] = useState('')
+    const [totalNodes, setTotalNodes] = useState(0)
+    const [selectedNodes, setSelectedNodes] = useState([])
     const navigate = useNavigate()
 
     useEffect(() => {
-        const session = getNeo4jSession()
-        let query = `MATCH (n:Persona)`
+        const fetchData = async () => {
+            const session = getNeo4jSession()
 
-        if (searchTerm) {
-            query += ` WHERE toLower(n.nombre) CONTAINS toLower("${searchTerm}")`
-        }
+            let query = `MATCH (n:Persona)`
 
-        query += ' RETURN n'
+            if (searchTerm) {
+                query += ` WHERE toLower(n.nombre) CONTAINS toLower("${searchTerm}")`
+            }
 
-        session.run(query)
-            .then(result => {
+            query += ' RETURN n'
+
+            try {
+                const result = await session.run(query)
+
                 const records = result.records
                 const nodesData = records.map(record => {
                     const node = record.get('n').properties
                     node.neo4jId = record.get('n').identity.low
                     return node
                 })
+
                 setNodes(nodesData)
-                session.close()
-            })
-            .catch(error => console.error('Error retrieving nodes from Neo4j:', error))
+
+            } catch (error) {
+                console.error('Error retrieving nodes from Neo4j:', error)
+            }
+
+            session.close()
+
+            // Consulta para contar el número total de nodos
+            const countSession = getNeo4jSession()
+
+            try {
+                const countResult = await countSession.run('MATCH (n:Persona) RETURN count(n) AS totalNodes')
+                const totalNodes = countResult.records[0].get('totalNodes').toNumber()
+                setTotalNodes(totalNodes)
+            } catch (error) {
+                console.error('Error retrieving total nodes count from Neo4j:', error)
+            }
+
+            countSession.close()
+        }
+
+        fetchData()
     }, [searchTerm])
 
     const handleEditNode = (neo4jId) => {
         navigate(`/updateUser/${neo4jId}`)
     }
 
-    /**
-     * Eliminacion del nodo junto con todas las relaciones que posee, entrantes y salientes
-     * @param {} neo4jId 
-     */
-    const handleDeleteNode = async (neo4jId) => {
+    const handleDeleteNode = async () => {
         try {
-            const session = getNeo4jSession()
-            const deleteQuery = `
-                MATCH (n)-[r]-() 
-                WHERE ID(n) = ${neo4jId} 
-                DELETE n, r
-            `
-            await session.run(deleteQuery)
-            session.close()
-            setNodes(prevNodes => prevNodes.filter(node => node.neo4jId !== neo4jId))
-            navigate('/')
-        } catch (error) {
-            console.error('Error deleting node and relationships from Neo4j:', error)
-        }
-    }
+            const session = getNeo4jSession();
+            const idsToDelete = selectedNodes.map(node => node.neo4jId);
+            for (const neo4jId of idsToDelete) {
+                const checkRelationsQuery = `
+                    MATCH (n)-[r]-()
+                    WHERE ID(n) = ${neo4jId}
+                    RETURN COUNT(r) AS relationCount
+                `;
+                const result = await session.run(checkRelationsQuery);
+                const relationCount = result.records[0].get('relationCount').toNumber();
+        
+                if (relationCount > 0) {
+                    // El nodo tiene relaciones, eliminar nodo y relaciones
+                    const deleteQuery = `
+                        MATCH (n)-[r]-()
+                        WHERE ID(n) = ${neo4jId}
+                        DELETE n, r
+                    `;
+                    await session.run(deleteQuery);
+                } else {
+                    // El nodo no tiene relaciones, eliminar solo el nodo
+                    const deleteNodeQuery = `
+                        MATCH (n)
+                        WHERE ID(n) = ${neo4jId}
+                        DELETE n
+                    `;
+                    await session.run(deleteNodeQuery);
+                }
+            }
 
+            session.close();
+    
+            // Actualizar la lista de nodos después de eliminar los nodos seleccionados
+            setNodes(prevNodes => prevNodes.filter(node => !selectedNodes.some(selectedNode => selectedNode.neo4jId === node.neo4jId)));
+            setSelectedNodes([]);
+            navigate('/');
+        } catch (error) {
+            console.error('Error deleting nodes and relationships from Neo4j:', error);
+        }
+    };
+    
     const handleNodeInfo = (neo4jId) => {
         navigate(`/detalles/${neo4jId}`)
     }
 
+    const toggleNodeSelection = (neo4jId) => {
+        const isSelected = selectedNodes.some(node => node.neo4jId === neo4jId);
+        if (isSelected) {
+            setSelectedNodes(prevSelected => prevSelected.filter(node => node.neo4jId !== neo4jId));
+        } else {
+            const nodeToAdd = nodes.find(node => node.neo4jId === neo4jId);
+            setSelectedNodes(prevSelected => [...prevSelected, nodeToAdd]);
+        }
+    };
 
     return (
         <div>
             <NavBar />
-            <h2 className={styles.title}>Clientes</h2> {/* Título fijo para Clientes */}
+            <h2 className={styles.title}>Clientes ({totalNodes})</h2> {/* Título con el total de nodos */}
             <input
                 type="text"
                 placeholder="Buscar por nombre..."
@@ -74,9 +130,17 @@ function Home() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={styles.search}
             />
+            {selectedNodes.length > 0 && (
+                <button onClick={handleDeleteNode}>Eliminar nodos seleccionados</button>
+            )}
             <div className={styles.nodeContainer}>
                 {nodes.map((node, index) => (
                     <div key={index} className={styles.nodeCard}>
+                        <input
+                            type="checkbox"
+                            checked={selectedNodes.some(selectedNode => selectedNode.neo4jId === node.neo4jId)}
+                            onChange={() => toggleNodeSelection(node.neo4jId)}
+                        />
                         <h3>{node.nombre}</h3>
                         {node.correos && <p>Correos: {node.correos.join(', ')}</p>}
                         {node.fecha_registro && (
@@ -90,7 +154,6 @@ function Home() {
                         <div className={styles.buttonContainer}>
                             <button className={styles.infoButton} onClick={() => handleNodeInfo(node.neo4jId)}>Detalles</button>
                             <button className={styles.editButton} onClick={() => handleEditNode(node.neo4jId)}>Editar</button>
-                            <button className={styles.deleteButton} onClick={() => handleDeleteNode(node.neo4jId)}>Eliminar</button>
                         </div>
                     </div>
                 ))}
@@ -100,6 +163,8 @@ function Home() {
 }
 
 export default Home
+
+
 
 
 
