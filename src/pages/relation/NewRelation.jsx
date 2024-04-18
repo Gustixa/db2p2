@@ -5,13 +5,11 @@ import styles from './NewRelation.module.css'; // Importa el archivo de estilos
 
 function NewRelation() {
     const [nodeData, setNodeData] = useState(null);
-    const [newProperty, setNewProperty] = useState({ name: '', value: '' }); // Estado para la nueva propiedad
-    const [comercios, setComercios] = useState([]); // Estado para almacenar los nodos comercio
-    const [tarjetas, setTarjetas] = useState([]); // Estado para almacenar los nodos tarjeta
-    const [selectedComercio, setSelectedComercio] = useState(''); // Estado para almacenar el nodo comercio seleccionado
-    const [selectedTarjeta, setSelectedTarjeta] = useState(''); // Estado para almacenar el nodo tarjeta seleccionado
-    const { nodeId } = useParams(); // Obtiene el parámetro de la URL
-
+    const [comercios, setComercios] = useState([]);
+    const [tarjetas, setTarjetas] = useState([]);
+    const [selectedComercio, setSelectedComercio] = useState('');
+    const [selectedTarjeta, setSelectedTarjeta] = useState('');
+    const { nodeId } = useParams();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -53,11 +51,18 @@ function NewRelation() {
             try {
                 const session = getNeo4jSession();
                 const tarjetasQuery = `MATCH (t:Tarjeta) RETURN t`;
+        
                 const result = await session.run(tarjetasQuery);
-                const tarjetasData = result.records.map(record => ({
-                    id: record.get('t').identity.low,
-                    nombre: record.get('t').properties.nombre
-                }));
+                const tarjetasData = result.records.map(record => {
+                    const tarjeta = record.get('t').properties;
+                    return {
+                        id: record.get('t').identity.low,
+                        tipo: tarjeta.tipo,
+                        limiteCredito: tarjeta.limite_credito,
+                        fechaEmision: tarjeta.fecha_emision,
+                        activa: tarjeta.activa
+                    };
+                });
                 setTarjetas(tarjetasData);
                 session.close();
             } catch (error) {
@@ -73,18 +78,6 @@ function NewRelation() {
         };
     }, [nodeId]);
 
-    const handleAddProperty = () => {
-        // Agrega la nueva propiedad al nodo solo si el nombre y el valor no están vacíos
-        if (newProperty.name.trim() !== '' && newProperty.value.trim() !== '') {
-            setNodeData(prevNodeData => ({
-                ...prevNodeData,
-                [newProperty.name]: newProperty.value
-            }));
-            // Limpia los campos después de agregar la propiedad
-            setNewProperty({ name: '', value: '' });
-        }
-    };
-
     const handleSelectComercio = (event) => {
         setSelectedComercio(event.target.value);
     };
@@ -97,12 +90,11 @@ function NewRelation() {
         event.preventDefault();
         try {
             const session = getNeo4jSession();
-
-            // Crear la relación con el nodo comercio seleccionado
             const relacionQuery = `
-                MATCH (n), (c:Comercio)
+                MATCH (n:Persona), (c:Comercio)
                 WHERE ID(n) = ${nodeId} AND ID(c) = ${selectedComercio}
                 CREATE (n)-[:COMPRA_EN]->(c)
+                RETURN n, c
             `;
             await session.run(relacionQuery);
             session.close();
@@ -120,14 +112,12 @@ function NewRelation() {
                 console.error('Error: Tarjeta o nodeId no definidos.');
                 return;
             }
-            
             const session = getNeo4jSession();
-    
-            // Crear la relación con el nodo tarjeta seleccionado
             const relacionQuery = `
                 MATCH (n:Tarjeta), (p:Persona)
                 WHERE ID(n) = ${selectedTarjeta} AND ID(p) = ${nodeId}
-                CREATE (p)-[:TIENE]->(n)
+                CREATE (p)-[:POSEE]->(n)
+                RETURN p, n
             `;
             await session.run(relacionQuery);
             session.close();
@@ -136,12 +126,6 @@ function NewRelation() {
         } catch (error) {
             console.error('Error creating relationship with Tarjeta in Neo4j:', error);
         }
-    };
-    
-
-    const handleCancel = async (event) => {
-        event.preventDefault();
-        navigate('/');
     };
 
     if (!nodeData) {
@@ -182,7 +166,7 @@ function NewRelation() {
                             <select value={selectedTarjeta} onChange={handleSelectTarjeta} className={styles.input}>
                                 <option value="">Seleccione una tarjeta...</option>
                                 {tarjetas.map(tarjeta => (
-                                    <option key={tarjeta.id} value={tarjeta.id}>{tarjeta.nombre}</option>
+                                    <option key={tarjeta.id} value={tarjeta.id}>{`Tipo: ${tarjeta.tipo}, Límite de crédito: ${tarjeta.limiteCredito}, Fecha de emisión: ${tarjeta.fechaEmision}, Activa: ${tarjeta.activa}`}</option>
                                 ))}
                             </select>
                         </div>
@@ -190,7 +174,7 @@ function NewRelation() {
                             Establecer Relación con Tarjeta
                         </button>
                     </div>
-                    <button className={styles.submitButton} onClick={() => handleRegresar()}>Regresar</button>
+                    <button className={styles.submitButton} onClick={handleRegresar}>Regresar</button>
                 </form>
             </div>
         </div>
